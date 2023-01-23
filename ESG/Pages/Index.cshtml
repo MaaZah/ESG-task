@@ -1,0 +1,157 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<div class="row">
+    <div class="col">
+        <canvas class="chart" id="chart1"></canvas>
+    </div>
+</div>
+<div class="row">
+    <button onclick="addRegressionData()">Calculate regression</button>
+</div>
+<div class="row">
+    <button onclick="addRegressionDataShifted()">Calculate regression (shifted)</button>
+</div>
+
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.3/jquery.min.js" integrity="sha512-STof4xm1wgkfm7heWqFJVn58Hm3EtS31XFaagaa8VMReCXAkQnJZ+jEy8PCC/iT18dFy95WcExNHFTqLyp72eQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js" integrity="sha512-ElRFoEQdI5Ht6kZvyzXhYG9NqjtkmlkfYk0wr6wHxU9JEHakS7UJZNeml5ALk+8IKlU6jDgMabC3vkumRokgJA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+
+
+
+<script>
+
+    var properties = {
+        options: {
+            scales: {
+                x: {
+                    type: 'time',
+                    position: 'bottom'
+                },
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left'
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right'
+                }
+            }
+        }
+    };
+
+
+    var mychart = new Chart(chart1, properties);
+    
+    $(document).ready(function () {
+        $.ajax({
+            type: "Get",
+            url: "/?handler=ChartData",
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function (response) {
+                console.log(response);
+                var data1 = response.pressureData;
+
+                var data2 = response.eventData;
+
+                var datasets = 
+                [{
+                    type: 'line',
+                    label: 'Treating Pressure',
+                    data: data1,
+                    yAxisID: 'y',
+                    borderColor: 'rgb(0,0,255)',
+                    backgroundColor: 'rgb(0,0,255)'
+                },
+                {
+                    type: 'scatter',
+                    label: 'Moment Magnitude',
+                    data: data2,
+                    yAxisID: 'y1',
+                    backgroundColor: 'rgb(255,0,0)'
+                }];
+
+                mychart.data.datasets = datasets;
+                mychart.update();
+            },
+            error: function (response) {
+                alert(response.responseText);
+            }
+        });
+    });
+
+    function addRegressionData(){
+        $.ajax({
+            type: "Get",
+            url: "/?handler=RegressionData",
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function (response) {
+                console.log(response);
+                var data = response;
+                var datasets = {
+                    type: 'line',
+                    label: 'Regression Fit',
+                    data: data,
+                    yAxisID: 'y1',
+                    pointRadius: 0,
+                    borderColor: 'rgb(255,0,0)',
+                    backgroundColor: 'rgb(255,0,0)'
+                };
+
+                if(mychart.data.datasets.length > 2)
+                {
+                    mychart.data.datasets.pop();
+                }
+
+                mychart.data.datasets.push(datasets);
+                mychart.update();
+
+            },
+            error: function (response) {
+                alert(response.responseText);
+            }
+        });
+    }
+
+    function addRegressionDataShifted() {
+        $.ajax({
+            type: "Get",
+            url: "/?handler=RegressionDataShifted",
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function (response) {
+                console.log(response);
+                var data = response;
+                var datasets = {
+                    type: 'line',
+                    label: 'Regression Fit Shifted',
+                    data: data,
+                    yAxisID: 'y1',
+                    pointRadius: 0,
+                    borderColor: 'rgb(0,255,0)',
+                    backgroundColor: 'rgb(0,255,0)'
+                };
+
+                if (mychart.data.datasets.length > 2) {
+                    mychart.data.datasets.pop();
+                }
+
+                mychart.data.datasets.push(datasets);
+                mychart.update();
+
+            },
+            error: function (response) {
+                alert(response.responseText);
+            }
+        });
+    }
+</script>
